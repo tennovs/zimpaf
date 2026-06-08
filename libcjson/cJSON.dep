@@ -1,0 +1,3 @@
+libcjson/cJSON.lo: \
+ /home/tennov/php-src-8.3.19/ext/zimpaf/libcjson/cJSON.c \
+ /home/tennov/php-src-8.3.19/ext/zimpaf/libcjson/cJSON.h
