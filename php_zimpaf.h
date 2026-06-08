@@ -14,7 +14,7 @@
 
 /* zimpaf extension for PHP */
 #ifndef PHP_ZIMPAF_H
-# define PHP_ZIMPAF_H
+#define PHP_ZIMPAF_H
 
 #include "php.h"
 #include "libcjson/cJSON.h"
@@ -22,7 +22,7 @@
 extern zend_module_entry zimpaf_module_entry;
 # define phpext_zimpaf_ptr &zimpaf_module_entry
 
-#define PHP_ZIMPAF_VERSION "1.1.1"
+#define PHP_ZIMPAF_VERSION "2.0.0"
 #define MAX_CHARS 1000			//max chars in file path and branch instruction executed for each request path
 #define MAX_FILES 50			//max #files involved in each request execution, this is number of rows in path table
 #define LENGTH_FNAME 255		//max length of filename containing branch instruction executed for each request path
