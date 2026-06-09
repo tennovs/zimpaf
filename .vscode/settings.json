@@ -27,5 +27,8 @@
     "files.readonlyInclude": {
         "**/*.tccs": true,
         "**/*.summary": true
+    },
+    "files.associations": {
+        "hook_installer.h": "c"
     }
 }

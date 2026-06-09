@@ -1,6 +1,7 @@
 *.lo
 *.la
 .libs
+*.dep
 acinclude.m4
 aclocal.m4
 autom4te.cache
@@ -41,3 +42,8 @@ tests/**/*.mem
 tmp-php.ini
 __pycache__/
 *.pyc
+selesele/
+.vscode/launch.json.a2_modphp_work
+.vscode/launch.json.a2last
+.vscode/launch.json.php_cli_work
+libhooks/*.dep

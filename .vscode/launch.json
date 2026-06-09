@@ -1,0 +1,90 @@
+//for apache2 mod_php libphp.so, http request to browser/fuzzer/curl
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "name": "Apache: Debug Zimpaf",
+            "type": "cppdbg",
+            "request": "attach",                     //attach to apache2 process
+            // "request": "launch",                  //launch apache2 process
+            "program": "/usr/sbin/apache2",          //attach to apache2 process
+            // "program": "/home/tennov/myphp-8.3.19_fpm/sbin/php-fpm", //launch php cli process
+            // "program": "/usr/bin/sudo",           //launch apache2 process
+            // "args": [
+            //     "/usr/sbin/apache2",
+            //     "-X",
+            //     "-D",
+            //     "FOREGROUND"
+            // ],                                    //launch apache2 in foreground
+            "processId": "${command:pickProcess}",   //attach to apache2 process, pick process from list
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set GDB to start debugging on break",
+                    "text": "-gdb-set confirm off",
+                    "ignoreFailures": false
+                }
+            ],
+            "stopAtEntry": true,
+            "logging": {
+                "engineLogging": true,
+                "trace": true,
+                "traceResponse": true
+            },
+            "cwd": "/home/tennov/zimpaf/",
+            "sourceFileMap": {
+                "/home/tennov/zimpaf": "${workspaceFolder}"
+		    // "/original/build/path/ext/yaml": "${workspaceFolder}/ext/yaml"
+            }//,
+            //"preLaunchTask": "compile-extension"
+        }
+    ]
+}
+
+
+
+// {
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "PHP CLI: Debug opcodehooktest",
+//             "type": "cppdbg",
+//             "request": "launch",
+//             "program": "/home/tennov/myphp-8.3.17/bin/php",
+//             "args": ["/home/tennov/phpcodes/test.php"],
+//             "MIMode": "gdb",
+//             "miDebuggerPath": "/usr/bin/gdb",
+//             "cwd": "/home/tennov/php-src-8.3.17/",
+//             "stopAtEntry": true,
+//             "externalConsole": false,
+//             "setupCommands": [
+//                 {
+//                     "description": "Enable pretty-printing for gdb",
+//                     "text": "-enable-pretty-printing",
+//                     "ignoreFailures": true
+//                 }
+//             ],
+//             "logging": {
+//                 "engineLogging": true,
+//                 "trace": true,
+//                 "traceResponse": true
+//             },
+//             "sourceFileMap": {
+//                 "/home/tennov/php-src-8.3.17": "${workspaceFolder}"
+//             },
+//             "miDebuggerArgs": "-ex 'set detach-on-fork off' -ex 'handle SIGSEGV stop nostop noprint'"
+//         }
+//     ]
+// }
+
+
+
+
+

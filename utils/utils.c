@@ -1,5 +1,5 @@
 /*
- * Copyright © 
+ * Copyright © 2026 Tennov Simanjuntak, The University of Texas at Arlington
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 #include "../include/utils.h"
 #include "../php_zimpaf.h"
+#include "zend_virtual_cwd.h"
 
 #define PHP_STREAM_FLAG_DEAD 0x04
 
@@ -679,6 +680,75 @@ void add_zval_value_info_to_cJSON_object(zval *zv, cJSON *object, char *key_valu
             cJSON_AddStringToObject(object, key_data_type, "[OTHER_TYPE]");
             break;
     }
+}
+
+void trace_directory_setup(char *base_dir){
+    char *subdirs[] = {"coverage-reports", "error-reports", "exception-reports", "mysql-error-reports",
+                        "shell-error-reports","function-call-traces",
+                        "input-tainted-branch-traces",  //ZIMPAF new folder name to store the tainted branch traces (>= version 2.0.0)
+                        };
+    char *old_subdirs[] = {"coverage-reports", "error-reports", "exception-reports", "mysql-error-reports",
+                        "shell-error-reports","function-call-traces",
+                        "input_params_comparisons"      //ZIMPAF old folder name to store the tainted branch traces (version 1.x.x) 
+                    };  
+    int num_subdirs = sizeof(subdirs) / sizeof(subdirs[0]);
+    int old_num_subdirs = sizeof(old_subdirs) / sizeof(old_subdirs[0]);
+    if (base_dir) {
+        #ifdef PHP_WIN32
+            char sep = '\\';
+            if (VCWD_ACCESS(base_dir, F_OK) == -1) {
+                if (VCWD_MKDIR(base_dir, 0777) == -1) {
+                    php_error_docref(NULL, E_CORE_ERROR, "Failed to create trace directory: %s. ZIMPAF terminates", base_dir);
+                    exit(1);
+                }
+            }
+            for (int i = 0; i < num_subdirs; i++) {
+                unsigned int len = strlen(base_dir) + 1 + strlen(subdirs[i]) + 1;
+                char subdir_path[512];
+                snprintf(subdir_path, len, "%s%c%s", base_dir, sep, subdirs[i]);
+                if (VCWD_ACCESS(subdir_path, F_OK) == -1) {
+                    if (VCWD_MKDIR(subdir_path, 0777) == -1) {
+                        php_error_docref(NULL, E_CORE_ERROR, "Failed to create trace subdirectory: %s. ZIMPAF terminates", subdir_path);
+                        exit(1);
+                    }
+                }
+            }
+
+        #else
+            char sep = '/';
+            if(strcmp(base_dir, "/zimpaf_traces") == 0){ //Traces location for ZIMPAF version >= 2.0.0
+                if (VCWD_ACCESS(base_dir, F_OK) == -1) {
+                    if (VCWD_MKDIR(base_dir, 0777) == -1) {
+                        php_error_docref(NULL, E_CORE_ERROR, "Failed to create trace directory: %s. ZIMPAF terminates", base_dir);
+                        exit(1);
+                    }
+                }
+                for (int i = 0; i < num_subdirs; i++) {
+                    unsigned int len = strlen(base_dir) + 1 + strlen(subdirs[i]) + 1;
+                    char subdir_path[len];
+                    snprintf(subdir_path, len, "%s%c%s", base_dir, sep, subdirs[i]);
+                    if (VCWD_ACCESS(subdir_path, F_OK) == -1) {
+                        if (VCWD_MKDIR(subdir_path, 0777) == -1) {
+                            php_error_docref(NULL, E_CORE_ERROR, "Failed to create trace subdirectory: %s. ZIMPAF terminates", subdir_path);
+                            exit(1);    
+                        }
+                    }
+                }
+            }else if(strcmp(base_dir, "/shared-tmpfs") == 0){ //Traces location for ZIMPAF version 1.x.x
+                for (int i = 0; i < old_num_subdirs; i++) {
+                    unsigned int len = strlen(base_dir) + 1 + strlen(old_subdirs[i]) + 1;
+                    char subdir_path[len];
+                    snprintf(subdir_path, len, "%s%c%s", base_dir, sep, old_subdirs[i]);
+                    if (VCWD_ACCESS(subdir_path, F_OK) == -1) {
+                        if (VCWD_MKDIR(subdir_path, 0777) == -1) {
+                            php_error_docref(NULL, E_CORE_ERROR, "Failed to create trace subdirectory: %s. ZIMPAF terminates", subdir_path);
+                            exit(1);    
+                        }
+                    }
+                }
+            }
+        #endif
+    }  
 }
 	
 

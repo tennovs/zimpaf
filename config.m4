@@ -102,5 +102,5 @@ if test "$PHP_ZIMPAF" != "no"; then
   PHP_NEW_EXTENSION(zimpaf, zimpaf.c request_retrieval.c libhooks/dbhook.c \
                                 libhooks/sanithook.c libhooks/deserhook.c libhooks/xxehook.c \
                                 libhooks/codexechook.c libhooks/dirtravshook.c libcjson/cJSON.c \
-                                libhooks/error_exception_hook.c utils/utils.c, $ext_shared)
+                                libhooks/error_exception_hook.c libhooks/hooks_installer.c utils/utils.c, $ext_shared)
 fi
