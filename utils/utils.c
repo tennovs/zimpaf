@@ -701,6 +701,7 @@ void trace_directory_setup(char *base_dir){
                     php_error_docref(NULL, E_CORE_ERROR, "Failed to create trace directory: %s. ZIMPAF terminates", base_dir);
                     exit(1);
                 }
+                VCWD_CHMOD(base_dir, 0777); // Ensure the directory is writable by all users
             }
             for (int i = 0; i < num_subdirs; i++) {
                 unsigned int len = strlen(base_dir) + 1 + strlen(subdirs[i]) + 1;
@@ -711,6 +712,7 @@ void trace_directory_setup(char *base_dir){
                         php_error_docref(NULL, E_CORE_ERROR, "Failed to create trace subdirectory: %s. ZIMPAF terminates", subdir_path);
                         exit(1);
                     }
+                    VCWD_CHMOD(subdir_path, 0777); // Ensure the subdirectory is writable by all users
                 }
             }
 
@@ -722,6 +724,7 @@ void trace_directory_setup(char *base_dir){
                         php_error_docref(NULL, E_CORE_ERROR, "Failed to create trace directory: %s. ZIMPAF terminates", base_dir);
                         exit(1);
                     }
+                    VCWD_CHMOD(base_dir, 0777); // Ensure the directory is writable by all users
                 }
                 for (int i = 0; i < num_subdirs; i++) {
                     unsigned int len = strlen(base_dir) + 1 + strlen(subdirs[i]) + 1;
@@ -732,6 +735,7 @@ void trace_directory_setup(char *base_dir){
                             php_error_docref(NULL, E_CORE_ERROR, "Failed to create trace subdirectory: %s. ZIMPAF terminates", subdir_path);
                             exit(1);    
                         }
+                        VCWD_CHMOD(subdir_path, 0777); // Ensure the subdirectory is writable by all users
                     }
                 }
             }else if(strcmp(base_dir, "/shared-tmpfs") == 0){ //Traces location for ZIMPAF version 1.x.x
@@ -744,6 +748,7 @@ void trace_directory_setup(char *base_dir){
                             php_error_docref(NULL, E_CORE_ERROR, "Failed to create trace subdirectory: %s. ZIMPAF terminates", subdir_path);
                             exit(1);    
                         }
+                        VCWD_CHMOD(subdir_path, 0777); // Ensure the subdirectory is writable by all users
                     }
                 }
             }
