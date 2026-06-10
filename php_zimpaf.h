@@ -54,7 +54,7 @@ extern zend_module_entry zimpaf_module_entry;
 ZEND_BEGIN_MODULE_GLOBALS(zimpaf)
     char *coverage_id;
     cJSON *func_call_seq;
-    cJSON *input_comparisons;
+    cJSON *input_tainted_branches;
 
     char **path_table;
     unsigned int path_table_size;	//size of path table, number of rows in path table  

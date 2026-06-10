@@ -997,7 +997,7 @@ ZEND_TSRMLS_CACHE_UPDATE();
 
 	ZIMPAF_G(coverage_id) = NULL;
 	ZIMPAF_G(func_call_seq) = NULL;
-	ZIMPAF_G(input_comparisons) = NULL;
+	ZIMPAF_G(input_tainted_branches) = NULL;
 
 	//This purpose is to avoid duplication of error or exception report caught by zimpaf_observe_exception, 
 	//zimpaf_observer_error_handler, and zend_error_cb, see libhooks/error_exception_hook.c
@@ -1029,7 +1029,7 @@ ZEND_TSRMLS_CACHE_UPDATE();
 	if(ZIMPAF_G(coverage_id) != NULL){
 		clear_path_table(ZIMPAF_G(path_table));
 		ZIMPAF_G(func_call_seq) = cJSON_CreateArray();
-		ZIMPAF_G(input_comparisons) = cJSON_CreateArray();
+		ZIMPAF_G(input_tainted_branches) = cJSON_CreateArray();
 		
 		ZIMPAF_G(orig_bailout) = EG(bailout);
 		EG(bailout) = &ZIMPAF_G(bailout_buf);
@@ -1074,10 +1074,19 @@ PHP_RSHUTDOWN_FUNCTION(zimpaf)
 	double start_logging = zend_hrtime();
 
 	if(ZIMPAF_G(coverage_id) != NULL){
-		char cocov_dir[] = "/shared-tmpfs/coverage-reports/";
+		char cocov_dir[512] = {0};
+		unsigned int len_cocov_dir = strlen(ZIMPAF_G(base_dir)) + strlen("/coverage-reports") + 1;
+		#ifdef PHP_WIN32
+			char sep = '\\';
+			snprintf(cocov_dir, len_cocov_dir, "%s\\coverage-reports", ZIMPAF_G(base_dir));
+		#else
+			char sep = '/';
+			snprintf(cocov_dir, len_cocov_dir, "%s/coverage-reports", ZIMPAF_G(base_dir));
+		#endif
+
 		unsigned int len_cocov_fname = strlen(cocov_dir) + strlen("/")+strlen(ZIMPAF_G(coverage_id))+strlen(".json")+1;
-		char cocov_fname[len_cocov_fname];
-		snprintf(cocov_fname, len_cocov_fname, "%s/%s.json", cocov_dir, ZIMPAF_G(coverage_id));
+		char cocov_fname[1024]; //to avoid Variable Length Array which can fail on some platforms.
+		snprintf(cocov_fname, len_cocov_fname, "%s%c%s.json", cocov_dir, sep, ZIMPAF_G(coverage_id));
 		FILE *file = fopen(cocov_fname,"w");
 		char **table = ZIMPAF_G(path_table);
 
@@ -1108,10 +1117,19 @@ PHP_RSHUTDOWN_FUNCTION(zimpaf)
 			}
 		}
 		if(ZIMPAF_G(func_call_seq) != NULL && cJSON_GetArraySize(ZIMPAF_G(func_call_seq)) > 0){
-			char func_trace_dir[] = "/shared-tmpfs/function-call-traces";
+			char func_trace_dir[512] = {0};
+			unsigned int len_func_trace_dir = strlen(ZIMPAF_G(base_dir)) + strlen("/function-call-traces") + 1;
+			#ifdef PHP_WIN32
+				char sep = '\\';
+				snprintf(func_trace_dir, len_func_trace_dir, "%s\\function-call-traces", ZIMPAF_G(base_dir));
+			#else
+				char sep = '/';
+				snprintf(func_trace_dir, len_func_trace_dir, "%s/function-call-traces", ZIMPAF_G(base_dir));
+			#endif
+
 			unsigned int len_func_trace_fname = strlen(func_trace_dir) + strlen("/")+strlen(ZIMPAF_G(coverage_id))+strlen(".json")+1;
-			char func_trace_fname[len_func_trace_fname];
-			snprintf(func_trace_fname, len_func_trace_fname, "%s/%s.json", func_trace_dir, ZIMPAF_G(coverage_id));
+			char func_trace_fname[1024]; //to avoid Variable Length Array which can fail on some platforms.
+			snprintf(func_trace_fname, len_func_trace_fname, "%s%c%s.json", func_trace_dir, sep, ZIMPAF_G(coverage_id));
 			char *json_string = cJSON_Print(ZIMPAF_G(func_call_seq)); // Use cJSON_PrintUnformatted() for compact output
 			if(json_string!= NULL){
 				printf("%s\n", json_string);
@@ -1125,23 +1143,40 @@ PHP_RSHUTDOWN_FUNCTION(zimpaf)
 			cJSON_Delete(ZIMPAF_G(func_call_seq));
 			ZIMPAF_G(func_call_seq) = NULL;
 		}
-		if(ZIMPAF_G(input_comparisons) != NULL && cJSON_GetArraySize(ZIMPAF_G(input_comparisons)) > 0){
-			char input_comparisons_dir[] = "/shared-tmpfs/input_params_comparisons";
-			unsigned int len_input_comparisons_fname = strlen(input_comparisons_dir) + strlen("/")+strlen(ZIMPAF_G(coverage_id))+strlen(".json")+1;
-			char input_comparisons_fname[len_input_comparisons_fname];
-			snprintf(input_comparisons_fname, len_input_comparisons_fname, "%s/%s.json", input_comparisons_dir, ZIMPAF_G(coverage_id));
-			char *json_string = cJSON_Print(ZIMPAF_G(input_comparisons)); // Use cJSON_PrintUnformatted() for compact output
+		if(ZIMPAF_G(input_tainted_branches) != NULL && cJSON_GetArraySize(ZIMPAF_G(input_tainted_branches)) > 0){
+			char tainted_branches_dir[512] = {0};
+			unsigned int len_tainted_branches_dir = strlen(ZIMPAF_G(base_dir)) + strlen("/input-tainted-branch-traces") + 1;
+			// Backward compatibility check for old ZIMPAF v 1.x.x traces location for branches tainted by input.
+			unsigned int len_input_comparisons_dir = strlen(ZIMPAF_G(base_dir)) + strlen("/input_params_comparisons") + 1;
+
+			#ifdef PHP_WIN32
+				char sep = '\\';
+				snprintf(tainted_branches_dir, len_tainted_branches_dir, "%s\\input-tainted-branch-traces", ZIMPAF_G(base_dir));
+			#else
+				char sep = '/';
+				if(strcmp(ZIMPAF_G(base_dir), "/zimpaf_traces") == 0){
+					snprintf(tainted_branches_dir, len_tainted_branches_dir, "%s/input-tainted-branch-traces", ZIMPAF_G(base_dir));
+				}else{
+					// Backward compatibility check for old ZIMPAF v 1.x.x traces location for branches tainted by input.
+					snprintf(tainted_branches_dir, len_input_comparisons_dir, "%s/input_params_comparisons", ZIMPAF_G(base_dir));
+				}
+			#endif
+
+			unsigned int len_tainted_branches_fname = strlen(tainted_branches_dir) + strlen("/")+strlen(ZIMPAF_G(coverage_id))+strlen(".json")+1;
+			char tainted_branch_traces_fname[1024]; //to avoid Variable Length Array which can fail on some platforms.
+			snprintf(tainted_branch_traces_fname, len_tainted_branches_fname, "%s%c%s.json", tainted_branches_dir, sep, ZIMPAF_G(coverage_id));
+			char *json_string = cJSON_Print(ZIMPAF_G(input_tainted_branches)); // Use cJSON_PrintUnformatted() for compact output
 			if(json_string!= NULL){
 				printf("%s\n", json_string);
-				FILE *f = fopen(input_comparisons_fname, "w");
+				FILE *f = fopen(tainted_branch_traces_fname, "w");
 				if (f) {
 					fputs(json_string, f);
 					fclose(f);
 				}
 			free(json_string); // Free the JSON string
 			}
-			cJSON_Delete(ZIMPAF_G(input_comparisons));
-			ZIMPAF_G(input_comparisons) = NULL;
+			cJSON_Delete(ZIMPAF_G(input_tainted_branches));
+			ZIMPAF_G(input_tainted_branches) = NULL;
 		}
 		efree(ZIMPAF_G(coverage_id));
 		ZIMPAF_G(coverage_id) = NULL;

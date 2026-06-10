@@ -638,7 +638,7 @@ void log_request_param_comparison(zend_string *op1_input_param, zend_string *op2
     }
     cJSON_AddStringToObject(comparison, "filename", filename);
     cJSON_AddNumberToObject(comparison, "lineno", lineno);
-    cJSON_AddItemToArray(ZIMPAF_G(input_comparisons), comparison);
+    cJSON_AddItemToArray(ZIMPAF_G(input_tainted_branches), comparison);
 }
 
 void add_zval_value_info_to_cJSON_object(zval *zv, cJSON *object, char *key_value, char *key_data_type){
