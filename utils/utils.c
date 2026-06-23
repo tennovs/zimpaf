@@ -755,9 +755,3 @@ void trace_directory_setup(char *base_dir){
         #endif
     }  
 }
-	
-
-
-
-
-

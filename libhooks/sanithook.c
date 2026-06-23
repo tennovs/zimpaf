@@ -1,5 +1,5 @@
 /*
- * Copyright © 
+ * Copyright © 2026 Tennov Simanjuntak, The University of Texas at Arlington
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -690,3 +690,4 @@ void hook_is_uploaded_file(){       //payload in 1st arg
         ori_is_uploaded_file_func->internal_function.handler = (zif_handler)generic_sanitation_handler;
     }
 } 
+

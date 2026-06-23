@@ -68,10 +68,13 @@ static user_opcode_handler_t original_coalesce_handler;
 
 //INCLUDE_OR_EVAL hook
 static user_opcode_handler_t original_include_or_eval_handler;
-//EXIT hook
-static user_opcode_handler_t original_exit_handler;
+
+#if PHP_VERSION_ID < 80400
+	//EXIT hook
+	static user_opcode_handler_t original_exit_handler;
+#endif
+
 //for holding the value of handler used in conditional_statement_handler, generic_lang_construct handler
-	
 static user_opcode_handler_t original_throw_handler;
 
 //to get which opcode handler is active for early termination when request is not for fuzzing or request without coverage_id
@@ -631,15 +634,21 @@ int generic_lang_construct_handler(zend_execute_data *execute_data){
 
 	char *filename = execute_data->func->op_array.filename->val;
 	const zend_op *opline = execute_data->opline;
+
 	if(ZIMPAF_G(coverage_id) == NULL || !strstr(filename,"/var/www/html/")){
 		if(opline->opcode == ZEND_INCLUDE_OR_EVAL && original_include_or_eval_handler){
 			return original_include_or_eval_handler(execute_data);
-		}else if(opline->opcode == ZEND_EXIT && original_exit_handler){
-			return original_exit_handler(execute_data);
-		}else{
-			//default dispatch
-			return ZEND_USER_OPCODE_DISPATCH;
+		
 		}
+	#if PHP_VERSION_ID < 80400
+		else if(opline->opcode == ZEND_EXIT && original_exit_handler){
+			return original_exit_handler(execute_data);
+		}
+	#endif
+		
+		//default dispatch
+		return ZEND_USER_OPCODE_DISPATCH;
+		
 	}
 	
 	user_opcode_handler_t original_handler = NULL;
@@ -677,6 +686,7 @@ int generic_lang_construct_handler(zend_execute_data *execute_data){
 			printf("Intercepted %s(...) by ZEND_INCLUDE_OR_EVAL at line %d\n", function_name,opline->lineno);
 			original_handler = original_include_or_eval_handler;
 			break;
+		#if PHP_VERSION_ID < 80400
 		case ZEND_EXIT:
 			strcpy(function_name, "die or exit");
 			char message[] = "";
@@ -686,6 +696,7 @@ int generic_lang_construct_handler(zend_execute_data *execute_data){
 			printf("Intercepted %s(...) by ZEND_EXIT at line %d\n", function_name,opline->lineno);
 			original_handler = original_exit_handler;
 			break;
+		#endif
 		default:
 			return ZEND_USER_OPCODE_DISPATCH; // For other opcodes, we can just return the default dispatch
 	}
@@ -732,7 +743,8 @@ int generic_lang_construct_handler(zend_execute_data *execute_data){
 	if(opline->extended_value == ZEND_EVAL){
 		cJSON_AddStringToObject(func_call, "command", param_str);
 		cJSON_AddNumberToObject(func_call, "sink_opline_type", cmd_opline_type);
-	}else{
+	}else if(opline->extended_value == ZEND_INCLUDE || opline->extended_value == ZEND_INCLUDE_ONCE 
+			|| opline->extended_value == ZEND_REQUIRE || opline->extended_value == ZEND_REQUIRE_ONCE){
 		cJSON_AddStringToObject(func_call, "path", param_str);
 		cJSON_AddNumberToObject(func_call, "sink_opline_type", path_opline_type);	
 	}
@@ -932,9 +944,12 @@ PHP_MINIT_FUNCTION(zimpaf){
 	/*INCLUDE_OR_EVAL hook*/
 	original_include_or_eval_handler = zend_get_user_opcode_handler(ZEND_INCLUDE_OR_EVAL);
 	zend_set_user_opcode_handler(ZEND_INCLUDE_OR_EVAL,generic_lang_construct_handler);
-
-	original_exit_handler = zend_get_user_opcode_handler(ZEND_EXIT);
-	zend_set_user_opcode_handler(ZEND_EXIT, generic_lang_construct_handler);	
+	
+	#if PHP_VERSION_ID < 80400
+		//for exit hook via ZEND_EXIT opcode
+		original_exit_handler = zend_get_user_opcode_handler(ZEND_EXIT);
+		zend_set_user_opcode_handler(ZEND_EXIT, generic_lang_construct_handler);	
+	#endif
 	
 	//for exception hook via ZEND_THROW opcode
 	original_throw_handler = zend_get_user_opcode_handler(ZEND_THROW);
@@ -975,7 +990,9 @@ PHP_MSHUTDOWN_FUNCTION(zimpaf) {
 	zend_set_user_opcode_handler(ZEND_INCLUDE_OR_EVAL, original_include_or_eval_handler);
 
 	// Restore the original EXIT handler
-	zend_set_user_opcode_handler(ZEND_EXIT, original_exit_handler);
+	#if PHP_VERSION_ID < 80400
+		zend_set_user_opcode_handler(ZEND_EXIT, original_exit_handler);
+	#endif
 
 	// Restore the original THROW handler
 	zend_set_user_opcode_handler(ZEND_THROW, original_throw_handler);
@@ -1031,15 +1048,19 @@ ZEND_TSRMLS_CACHE_UPDATE();
 		ZIMPAF_G(func_call_seq) = cJSON_CreateArray();
 		ZIMPAF_G(input_tainted_branches) = cJSON_CreateArray();
 		
-		ZIMPAF_G(orig_bailout) = EG(bailout);
-		EG(bailout) = &ZIMPAF_G(bailout_buf);
-		if (SETJMP(ZIMPAF_G(bailout_buf)) == 0) {
-			ZIMPAF_G(bailout_triggered) = 0;
-		} else {
-			ZIMPAF_G(bailout_triggered) = 1;
-		}
+		#if PHP_VERSION_ID < 80400
+			// Save the original bailout function pointer and set a new one
+			ZIMPAF_G(orig_bailout) = EG(bailout);
+			EG(bailout) = &ZIMPAF_G(bailout_buf);
+			if (SETJMP(ZIMPAF_G(bailout_buf)) == 0) {
+				ZIMPAF_G(bailout_triggered) = 0;
+			} else {
+				ZIMPAF_G(bailout_triggered) = 1;
+			}
+		#endif
 	}
 	//  zend_hrtime_t start = zend_hrtime();
+	
 	return SUCCESS;
 }
 
@@ -1049,10 +1070,12 @@ PHP_RSHUTDOWN_FUNCTION(zimpaf)
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
 	if(ZIMPAF_G(coverage_id) != NULL){
-		if(ZIMPAF_G(bailout_triggered)) {
-			fprintf(stderr, "Premature script termination (zend_bailout) detected!\n");
-		}
-		EG(bailout) = ZIMPAF_G(orig_bailout);  
+		#if PHP_VERSION_ID < 80400
+			if(ZIMPAF_G(bailout_triggered)) {
+				fprintf(stderr, "Premature script termination (zend_bailout) detected!\n");
+			}
+			EG(bailout) = ZIMPAF_G(orig_bailout);  
+		#endif
 	}
 
 	unsigned int covid_len = 0;
@@ -1269,7 +1292,10 @@ PHP_GINIT_FUNCTION(zimpaf){
     zimpaf_globals->pt_cur_rows_size = MAX_CHARS;
     zimpaf_globals->coverage_id = NULL;
     zimpaf_globals->func_call_seq = NULL;
-    zimpaf_globals->orig_bailout = NULL;
+
+	#if PHP_VERSION_ID < 80400
+	    zimpaf_globals->orig_bailout = NULL;
+	#endif
 }
 
 PHP_GSHUTDOWN_FUNCTION(zimpaf){

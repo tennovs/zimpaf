@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2026 Tennov Simanjuntak, The University of Texas at Arlington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ */
+
+
 #include "../include/hook_installer.h"
 #include "../include/codexechook.h"
 #include "../include/dbhook.h"
@@ -6,6 +21,7 @@
 #include "../include/error_exception_hook.h"
 #include "../include/sanithook.h"
 #include "../include/xxehook.h"
+#include "../include/flowfunchook.h"
 #include "zend_observer.h"
 
 
@@ -158,6 +174,12 @@ void install_hooks(){
 	 *Just in case Php version < 8 does not have this mechanism.
 	*/
 	zend_observer_error_register(zimpaf_observer_error_handler);
+
+	//hook for flow function, e.g exit()
+	/*Exit hook for PHP version >=8.4*/
+	#if PHP_VERSION_ID >= 80400
+		hook_exit();
+	#endif
 }
 
 void uninstall_hooks(){

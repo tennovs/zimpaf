@@ -19,6 +19,21 @@
 #include "php.h"
 #include "libcjson/cJSON.h"
 
+
+/* =================================================================== */
+/* INSERT COMPATIBILITY MACROS HERE                                    */
+/* =================================================================== */
+/* Global structural fallback for the purged zval_dtor symbol in PHP 4.0*/
+#ifndef zval_dtor
+# define zval_dtor(z) zval_ptr_dtor(z)
+#endif
+
+/* Guard against the deletion of ZEND_EXIT in PHP 8.5+ */
+// #ifndef ZEND_EXIT
+// # define ZEND_EXIT ZEND_RETURN
+// #endif
+/* =================================================================== */
+
 // /*  ===============================================================
 //     Support for Linux and Windows: directory to store zimpaf traces
 //     ===============================================================
@@ -84,9 +99,11 @@ ZEND_BEGIN_MODULE_GLOBALS(zimpaf)
     double start_time;
     double end_time;
 
-    JMP_BUF bailout_buf;        //global vars for bailout as indicator for script early termination
-    JMP_BUF *orig_bailout;      //implemented in rinit and rshutdown, used to restore the original bailout buffer      
-    int bailout_triggered;
+    #if PHP_VERSION_ID < 80400
+        JMP_BUF bailout_buf;        //global vars for bailout as indicator for script early termination
+        JMP_BUF *orig_bailout;      //implemented in rinit and rshutdown, used to restore the original bailout buffer      
+        int bailout_triggered;
+    #endif
 
     char *base_dir;               //base directory to store traces and logs, set in MINIT
 ZEND_END_MODULE_GLOBALS(zimpaf)

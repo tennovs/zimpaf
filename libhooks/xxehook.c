@@ -1,5 +1,5 @@
 /*
- * Copyright © 
+ * Copyright © 2026 Tennov Simanjuntak, The University of Texas at Arlington
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ zif_handler ori_xml_parse_handler = NULL;                                   //xm
 zif_handler get_xxefunction_handler(char *scope_name, char *func_name);
 
 zif_handler get_xxefunction_handler(char *scope_name, char *func_name){
-    if(scope_name, func_name){
+    if(scope_name && func_name){
         if(strcmp(scope_name,"DOMDocument")== 0){
             if(strcmp(func_name,"load")==0){
                 return ori_domdocument_load_method_handler; 

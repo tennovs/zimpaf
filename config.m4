@@ -99,8 +99,15 @@ if test "$PHP_ZIMPAF" != "no"; then
 
   AC_DEFINE(COMPILE_DL_ZIMPAF, 1, [Compile as dynamic library])
 
-  PHP_NEW_EXTENSION(zimpaf, zimpaf.c request_retrieval.c libhooks/dbhook.c \
-                                libhooks/sanithook.c libhooks/deserhook.c libhooks/xxehook.c \
-                                libhooks/codexechook.c libhooks/dirtravshook.c libcjson/cJSON.c \
-                                libhooks/error_exception_hook.c libhooks/hooks_installer.c utils/utils.c, $ext_shared)
+  dnl PHP_NEW_EXTENSION(zimpaf, zimpaf.c request_retrieval.c libhooks/dbhook.c \
+  dnl                              libhooks/sanithook.c libhooks/deserhook.c libhooks/xxehook.c \
+  dnl                              libhooks/codexechook.c libhooks/dirtravshook.c libcjson/cJSON.c \
+  dnl                              libhooks/error_exception_hook.c libhooks/hooks_installer.c libhooks/flowfunctionhook.c \
+  dnl                              utils/utils.c, $ext_shared)
+
+  # Use shell globbing to collect files from the libhooks directory
+  HOOK_FILES=`echo libhooks/*.c | tr '\n' ' '`
+
+  PHP_NEW_EXTENSION(zimpaf, zimpaf.c request_retrieval.c $HOOK_FILES \
+                          libcjson/cJSON.c utils/utils.c, $ext_shared)
 fi
