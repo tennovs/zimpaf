@@ -14,7 +14,7 @@
         "**/build": true,
         "**/bin": true,
         "**/obj": true,
-        "**/.vscode": false,
+        "**/.vscode": true,
         "**/*.???~": true,
         "**/.pvscontext": true,
         "**/pvsbin": true,

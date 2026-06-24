@@ -1,0 +1,4 @@
+# Force C language recognition for your source files
+*.c linguist-language=C
+*.h linguist-language=C
+
