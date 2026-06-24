@@ -39,7 +39,6 @@ tests/**/*.sh
 tests/**/*.db
 tests/**/*.mem
 tmp-php.ini
-__pycache__/
 *.pyc
 selesele/
 .vscode/launch.json.a2_modphp_work
