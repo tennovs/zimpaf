@@ -32,6 +32,8 @@
 #include "include/utils.h"
 #include "zend_hrtime.h"
 
+#include "include/perfhook.h"
+
 
 /* For compatibility with older PHP versions */
 #ifndef ZEND_PARSE_PARAMETERS_NONE
@@ -1010,6 +1012,12 @@ PHP_RINIT_FUNCTION(zimpaf){
 #if defined(ZTS) && defined(COMPILE_DL_ZIMPAF)
 ZEND_TSRMLS_CACHE_UPDATE();
 #endif
+
+// hook_memory_management();
+	static size_t rinit_memory = 0;	
+	rinit_memory = zend_memory_usage(0);
+
+
 	ZIMPAF_G(start_time) = zend_hrtime();
 
 	ZIMPAF_G(coverage_id) = NULL;
@@ -1078,6 +1086,7 @@ PHP_RSHUTDOWN_FUNCTION(zimpaf)
 		#endif
 	}
 
+
 	unsigned int covid_len = 0;
 	if(ZIMPAF_G(coverage_id) == NULL){
 		covid_len = 7; //length of "unknown"
@@ -1093,11 +1102,12 @@ PHP_RSHUTDOWN_FUNCTION(zimpaf)
 	}
 	covid_name[covid_len+1] = '\0';
 		
-
+	size_t rshutdown_mem = zend_memory_usage(0);
 	double start_logging = zend_hrtime();
+	char cocov_dir[512] = {0};
 
 	if(ZIMPAF_G(coverage_id) != NULL){
-		char cocov_dir[512] = {0};
+		
 		unsigned int len_cocov_dir = strlen(ZIMPAF_G(base_dir)) + strlen("/coverage-reports") + 1;
 		#ifdef PHP_WIN32
 			char sep = '\\';
@@ -1227,10 +1237,10 @@ PHP_RSHUTDOWN_FUNCTION(zimpaf)
 	double start_sec = ZIMPAF_G(start_time) / 1000000000;
 	double start_logging_sec = start_logging / 1000000000;
     double end_sec   = ZIMPAF_G(end_time) / 1000000000;
-	char cocov_dir[] = "/shared-tmpfs/coverage-reports/";
-	unsigned int len_time_fname = strlen(cocov_dir) + strlen(covid_name)+ strlen("_time.json")+1;
+	// char cocov_dir[] = "/shared-tmpfs/coverage-reports/";
+	unsigned int len_time_fname = strlen(cocov_dir) + strlen(covid_name)+ strlen("_perf.json")+1;
 	char time_fname[len_time_fname];
-	snprintf(time_fname, len_time_fname, "%s%s_time.json", cocov_dir, covid_name);
+	snprintf(time_fname, len_time_fname, "%s%s_perf.json", cocov_dir, covid_name);
 	FILE *ftime = fopen(time_fname,"w");
 	if(ftime){
 		fprintf(ftime, "start_time: %.16f \n", start_sec);

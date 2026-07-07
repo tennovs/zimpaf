@@ -23,7 +23,7 @@
 #include "../include/xxehook.h"
 #include "../include/flowfunchook.h"
 #include "zend_observer.h"
-
+#include "../include/perfhook.h"
 
 
 void install_hooks(){
@@ -180,6 +180,9 @@ void install_hooks(){
 	#if PHP_VERSION_ID >= 80400
 		hook_exit();
 	#endif
+
+	//hook performance related functions, e.g. malloc(), free(), realloc()
+	// hook_memory_management();
 }
 
 void uninstall_hooks(){

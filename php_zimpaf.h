@@ -25,7 +25,8 @@
 /* =================================================================== */
 /* Global structural fallback for the purged zval_dtor symbol in PHP 4.0*/
 #ifndef zval_dtor
-# define zval_dtor(z) zval_ptr_dtor(z)
+// # define zval_dtor(z) zval_ptr_dtor(z)
+# define zval_dtor(z) zval_ptr_dtor_nogc(z)
 #endif
 
 /* Guard against the deletion of ZEND_EXIT in PHP 8.5+ */
