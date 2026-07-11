@@ -16,7 +16,7 @@
 #include "../php_zimpaf.h"
 #include "../include/utils.h"
 
-zif_handler ori_exit_handler = NULL;                                //simplexml_load_string
+zif_handler ori_exit_handler = NULL;                                
 
 zif_handler get_flowfunction_handler(char *scope_name, char *func_name);
 
@@ -100,11 +100,11 @@ void hook_exit(){
   
     zend_function *ori_exit_func = zend_hash_str_find_ptr(CG(function_table), "exit", sizeof("exit")-1);
     if (ori_exit_func && ori_exit_func->type == ZEND_INTERNAL_FUNCTION) {
-        printf("Hooking exit function\n");
-        printf("Original exit function: %s\n", ZSTR_VAL(ori_exit_func->common.function_name));
-        printf("Original exit handler: %p\n", ori_exit_func->internal_function.handler);
+        //printf("Hooking exit function\n");
+        //printf("Original exit function: %s\n", ZSTR_VAL(ori_exit_func->common.function_name));
+        //printf("Original exit handler: %p\n", ori_exit_func->internal_function.handler);
         ori_exit_handler = ori_exit_func->internal_function.handler;
         ori_exit_func->internal_function.handler = (zif_handler) generic_flowfunction_handler;
-        printf("New exit handler: %p\n", ori_exit_func->internal_function.handler);
+        //printf("New exit handler: %p\n", ori_exit_func->internal_function.handler);
     }
 }
