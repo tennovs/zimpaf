@@ -1045,7 +1045,10 @@ ZEND_TSRMLS_CACHE_UPDATE();
 		ZIMPAF_G(coverage_id) = emalloc(length+1);
 		memset(ZIMPAF_G(coverage_id), 0, length+1);
 		strcpy(ZIMPAF_G(coverage_id), coverid);
-		php_printf("Coverage-ID: %s\n", ZIMPAF_G(coverage_id));
+
+		//comment this since osticket expect response to be clean, without additional info
+		// php_printf("Coverage-ID: %s\n", ZIMPAF_G(coverage_id));
+		// sapi_add_header("X-ZIMPAF-Coverage-ID: 1", sizeof("X-ZIMPAF-Coverage-ID: 1") - 1, 1);
 	}
 	/*Clear or reset path table to collect code coverate in terms of branch opcodes execution
 	  Allocate cJSON array to hold the function calls

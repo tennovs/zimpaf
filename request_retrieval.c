@@ -34,10 +34,11 @@ char * get_http_header(const char *header_name) {      //HTTP_ is appended autom
 
     //Example: Retrieve "User-Agent" header (stored as HTTP_USER_AGENT in $_SERVER)
     if ((header_value = zend_hash_str_find(server_hash, header_name, strlen(header_name))) != NULL) {
-        php_printf("User-Agent: %s\n", Z_STRVAL_P(header_value));
+        //comment this 
+        //php_printf("User-Agent: %s\n", Z_STRVAL_P(header_value));
     }
     if(header_value == NULL) {
-        php_printf("Header not found: %s\n", header_name);
+        //php_printf("Header not found: %s\n", header_name);
         return NULL;
     }else{
         return Z_STRVAL_P(header_value);
