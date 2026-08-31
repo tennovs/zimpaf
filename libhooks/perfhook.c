@@ -40,7 +40,6 @@ static bool zimpaf_in_hook = false;
         printf("zimpaf_malloc called with size: %zu\n", size);
         if (original_handlers.malloc) {
             // return original_handlers.malloc(size ZEND_FILE_LINE_RELAY_CC ZEND_FILE_LINE_ORIG_RELAY_CC);
-            
 
             void *p = original_handlers.malloc(
                 size
@@ -106,7 +105,6 @@ void hook_memory_management(){
     original_handlers.realloc = NULL;
 
     if (is_zend_mm()){
-        
             zend_mm_get_custom_handlers(heap, 
                                         &original_handlers.malloc, 
                                         &original_handlers.free, 
@@ -118,7 +116,6 @@ void hook_memory_management(){
             (void *)original_handlers.free,
             (void *)original_handlers.realloc);
      
-
             zend_mm_set_custom_handlers(
                 heap,
                 zimpaf_malloc, 

@@ -106,7 +106,8 @@ ZEND_BEGIN_MODULE_GLOBALS(zimpaf)
         int bailout_triggered;
     #endif
 
-    char *base_dir;               //base directory to store traces and logs, set in MINIT
+    char *base_dir;                 //base directory to store traces and logs, set in MINIT
+    size_t rinit_memory;            //
 ZEND_END_MODULE_GLOBALS(zimpaf)
 
 ZEND_EXTERN_MODULE_GLOBALS(zimpaf)

@@ -1014,8 +1014,9 @@ ZEND_TSRMLS_CACHE_UPDATE();
 #endif
 
 // hook_memory_management();
-	static size_t rinit_memory = 0;	
-	rinit_memory = zend_memory_usage(0);
+	static size_t rinit_mem_usage = 0;	
+	rinit_mem_usage = zend_memory_usage(0);
+	ZIMPAF_G(rinit_memory) = rinit_mem_usage;
 
 
 	ZIMPAF_G(start_time) = zend_hrtime();
@@ -1105,7 +1106,8 @@ PHP_RSHUTDOWN_FUNCTION(zimpaf)
 	}
 	covid_name[covid_len+1] = '\0';
 		
-	size_t rshutdown_mem = zend_memory_usage(0);
+	size_t rshutdown_mem_usage = zend_memory_usage(0);
+	size_t peak_mem = zend_memory_peak_usage(0);
 	double start_logging = zend_hrtime();
 	char cocov_dir[512] = {0};
 
@@ -1241,17 +1243,19 @@ PHP_RSHUTDOWN_FUNCTION(zimpaf)
 	double start_logging_sec = start_logging / 1000000000;
     double end_sec   = ZIMPAF_G(end_time) / 1000000000;
 	// char cocov_dir[] = "/shared-tmpfs/coverage-reports/";
-	unsigned int len_time_fname = strlen(cocov_dir) + strlen(covid_name)+ strlen("_perf.json")+1;
-	char time_fname[len_time_fname];
-	snprintf(time_fname, len_time_fname, "%s%s_perf.json", cocov_dir, covid_name);
-	FILE *ftime = fopen(time_fname,"w");
-	if(ftime){
-		fprintf(ftime, "start_time: %.16f \n", start_sec);
-		fprintf(ftime, "end_time:   %.16f \n", end_sec);
-		fprintf(ftime, "total_duration:   %.16f \n", (end_sec - start_sec));
-		fprintf(ftime, "writing_duration:   %.16f \n", (end_sec - start_logging_sec));
-    	fflush(ftime); // optional
-		fclose(ftime);
+	unsigned int len_perf_fname = strlen(cocov_dir) + strlen(covid_name)+ strlen("_perf.json")+1;
+	char perf_fname[len_perf_fname];
+	snprintf(perf_fname, len_perf_fname, "%s%s_perf.json", cocov_dir, covid_name);
+	FILE *fperf = fopen(perf_fname,"w");
+	if(fperf){
+		fprintf(fperf, "start_time: %.16f \n", start_sec);
+		fprintf(fperf, "end_time:   %.16f \n", end_sec);
+		fprintf(fperf, "total_duration:   %.16f \n", (end_sec - start_sec));
+		fprintf(fperf, "writing_duration:   %.16f \n", (end_sec - start_logging_sec));
+		fprintf(fperf, "zimpaf_mem_usage_at_shutdown: %lu\n", (rshutdown_mem_usage-ZIMPAF_G(rinit_memory)));
+		fprintf(fperf, "peak_memory: %lu\n", peak_mem);
+    	fflush(fperf); // optional
+		fclose(fperf);
 	}
 
 	return SUCCESS;
