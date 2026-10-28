@@ -29,26 +29,74 @@ char *concatenate_zval_array_into_string(zval *array_zv) {
 
     zend_string *result = NULL;
 
+    // ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(array_zv), zval *val) {
+    //     if (!val || Z_TYPE_P(val) == IS_FALSE || Z_TYPE_P(val) == IS_NULL) {
+    //         continue; // skip invalid entries
+    //     }
+
+    //     zval tmp;
+    //     ZVAL_UNDEF(&tmp);
+    //     ZVAL_COPY(&tmp, val);
+
+    //     if(Z_TYPE_P(&tmp) == IS_OBJECT){
+    //         zval_ptr_dtor(&tmp);
+    //         continue;
+    //     }
+    //     convert_to_string(&tmp); // safe conversion
+
+    //     if (result == NULL) {
+    //         // result = zend_string_copy(Z_STR(tmp)); //increasing tmp
+    //         result = zend_string_init(Z_STRVAL(tmp), Z_STRLEN(tmp), 0);
+    //     } else {
+    //         zend_string *joined = strpprintf(0, "%s_%s", ZSTR_VAL(result), Z_STRVAL(tmp));
+    //         zend_string_release(result);
+    //         result = joined;
+    //     }
+
+    //     zval_ptr_dtor(&tmp); //clean up with garbage collectio enabled.
+    // } ZEND_HASH_FOREACH_END();
+
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(array_zv), zval *val) {
-        if (Z_TYPE_P(val) == IS_FALSE) {
+        if (!val || Z_TYPE_P(val) == IS_FALSE || Z_TYPE_P(val) == IS_NULL) {
             continue; // skip invalid entries
         }
 
-        zval tmp;
-        ZVAL_UNDEF(&tmp);
-        ZVAL_COPY(&tmp, val);
-        convert_to_string(&tmp); // safe conversion
-
-        if (result == NULL) {
-            // result = zend_string_copy(Z_STR(tmp)); //increasing tmp
-            result = zend_string_init(Z_STRVAL(tmp), Z_STRLEN(tmp), 0);
-        } else {
-            zend_string *joined = strpprintf(0, "%s_%s", ZSTR_VAL(result), Z_STRVAL(tmp));
-            zend_string_release(result);
-            result = joined;
+        // Handle Objects: skip or represent safely
+        if (Z_TYPE_P(val) == IS_OBJECT) {
+            continue; 
         }
 
-        zval_ptr_dtor(&tmp); //clean up with garbage collectio enabled.
+        char *piece_str = NULL;
+
+        if (Z_TYPE_P(val) == IS_ARRAY) {
+            // Recursive call for nested arrays
+            piece_str = concatenate_zval_array_into_string(val);
+        } else {
+            // Handle scalars (convert to string safely via a temp zval)
+            zval tmp;
+            ZVAL_UNDEF(&tmp);
+            ZVAL_COPY(&tmp, val);
+            convert_to_string(&tmp);
+            
+            piece_str = estrdup(ZSTR_VAL(Z_STR(tmp)));
+            zval_ptr_dtor(&tmp);
+        }
+
+        // Append to result
+        if (piece_str && piece_str[0] != '\0') {
+            if (result == NULL) {
+                result = zend_string_init(piece_str, strlen(piece_str), 0);
+            } else {
+                zend_string *joined = strpprintf(0, "%s_%s", ZSTR_VAL(result), piece_str);
+                zend_string_release(result);
+                result = joined;
+            }
+        }
+        
+        if (piece_str) {
+            efree(piece_str);
+        }
+
     } ZEND_HASH_FOREACH_END();
 
     if (result) {
@@ -262,6 +310,14 @@ char *get_return_value_string(zval *return_value){
 }
 
 char *get_func_param_string(zval *param_zv) {
+    if(!param_zv){
+        return estrdup("");
+    }
+
+    if(Z_TYPE_P(param_zv) == IS_OBJECT){
+        return estrdup("[Object]");
+    }
+
     if (EXPECTED(Z_TYPE_P(param_zv) == IS_STRING)) {
         return estrdup(Z_STRVAL_P(param_zv));               //caller must efree
     }
@@ -502,21 +558,29 @@ zend_string *is_zval_value_in_array(zend_execute_data *execute_data, zval *zv, z
                 #if PHP_VERSION_ID >= 80500 
                     if (fetch_isset->op2_type == IS_TMP_VAR) {
                         // Fall through to the 'else' branch below for PHP 8.5+ tmp_vars, avoiding SIGSEGV
-                        return NULL; 
+                        goto traverse_superglobal;
+                        // return NULL; 
                     }
                 #endif
-
+                
+                //Ensure that key is a string and not a remnants from previous request or from garbage value
                 key = Z_STR_P(op2_zv);
-                // Direct lookup in the superglobal hashtable
-                zval *found_val = zend_hash_find(Z_ARRVAL_P(array_zv), key);
-        
-                if (found_val) {
-                    // Match found! You have the tainted value without looping.
-                    return key;
+                if(key != NULL && key->len > 0 && key->len < 512){
+                    char first_char = ZSTR_VAL(key)[0];
+                    if ((first_char >= 'a' && first_char <= 'z') || (first_char >= 'A' && first_char <= 'Z') || 
+                        first_char == '_') {
+                            // Direct lookup in the superglobal hashtable
+                        zval *found_val = zend_hash_find(Z_ARRVAL_P(array_zv), key);
+                        if (found_val) {
+                            // Match found! You have the tainted value without looping.
+                            return key;
+                        }
+                    }
                 }
             }
         }
     }else{
+        traverse_superglobal:
         ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(array_zv), h, key, val) {
             if(zv->value.ptr == val->value.ptr){
                 printf("Op2 Type: %d, Ptr: %p\n", Z_TYPE_P(val), val->value.ptr);

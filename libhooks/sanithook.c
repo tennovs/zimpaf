@@ -216,9 +216,16 @@ void generic_sanitation_handler(zend_execute_data *execute_data, zval *return_va
         cJSON_AddStringToObject(func_call, "string", str_param);
         efree(str_param);
     }else if(strcmp(func_name_str, "filter_var_array") != 0 && //these functions do not have string arguments
-        strcmp(func_name_str, "filter_input_array") != 0 &&
-        strcmp(func_name_str, "filter_var") != 0 ){
-        char *str_param = get_func_param_string(ZEND_CALL_ARG(execute_data, arg_index));
+            strcmp(func_name_str, "filter_input_array") != 0 &&
+            strcmp(func_name_str, "filter_var") != 0 ){
+        zval *arg = ZEND_CALL_ARG(execute_data, arg_index);
+        char *str_param = NULL;
+        if (Z_TYPE_P(arg) == IS_ARRAY){
+            str_param = concatenate_zval_array_into_string(arg);
+        }else{
+            str_param = get_func_param_string(arg);
+        }
+         
         cJSON_AddStringToObject(func_call, "string", str_param);
         efree(str_param);
     }else if(strcmp(func_name_str, "filter_var") == 0){

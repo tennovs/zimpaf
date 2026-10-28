@@ -198,7 +198,7 @@ void generic_dirtravs_handler(zend_execute_data *execute_data, zval *return_valu
         lineno = caller->opline ? caller->opline->lineno : 0;
     }
 
-    cJSON *func_call;
+    cJSON *func_call = NULL;
     unsigned int path_opline_type;
 
     if(strstr(filename,"/var/www/html/")){
@@ -207,9 +207,13 @@ void generic_dirtravs_handler(zend_execute_data *execute_data, zval *return_valu
 
         zval *path = NULL;
         if(strcmp(func_name,"clearstatcache")==0){
-            path= ZEND_CALL_ARG(execute_data, 2);
+            if (num_args >= 2){
+                path= ZEND_CALL_ARG(execute_data, 2);
+            }
         }else{
-            path= ZEND_CALL_ARG(execute_data, 1);
+            if(num_args >=1){
+                path= ZEND_CALL_ARG(execute_data, 1);
+            }
         }
 
         if (Z_TYPE_P(path) == IS_STRING) {

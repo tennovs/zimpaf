@@ -1040,6 +1040,7 @@ ZEND_TSRMLS_CACHE_UPDATE();
 
 	char *coverid = NULL;
 	const char *header = "HTTP_X_FUZZER_COVID";
+	// const char *header = "HTTP_FUZZER_COVID";
 	coverid = get_http_header(header);
 	if(coverid != NULL){
 		unsigned int length = strlen(coverid);
