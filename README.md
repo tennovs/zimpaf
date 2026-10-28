@@ -98,7 +98,7 @@ Robust exceptions reporting via:
 ---
 
 ## Log Directories
-- Since version 1.2.0, the log is under `\zimpaf_traces`
+- Since version 1.2.0, the log is under `/zimpaf_traces`
 - Previous version, the log follows RedPhuzz's directory creation below. See ([ZIMPAF_RedPhuzz](https://github.com/tennovs/zimpaf/tree/main))
 
 ```
