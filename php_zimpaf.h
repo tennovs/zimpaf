@@ -1,5 +1,5 @@
 /*
- * Copyright © Tennov Simanjuntak at The University of Texas at Arlinton
+ * Copyright © Tennov Simanjuntak at The University of Texas at Arlington
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@
 extern zend_module_entry zimpaf_module_entry;
 # define phpext_zimpaf_ptr &zimpaf_module_entry
 
-#define PHP_ZIMPAF_VERSION "2.0.0"
+#define PHP_ZIMPAF_VERSION "2.0.1"
 
 #ifdef PHP_WIN32
 #	define PHP_ZIMPAF_API __declspec(dllexport)
