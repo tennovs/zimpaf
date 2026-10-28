@@ -1,5 +1,4 @@
-# ZIMPAF v2.0.1
-
+# ZIMPAF v1.2.1
 - **Stability Fix**: utils/utils.c
     - function is_`zval_value_in_array`: Ensure that key is a string and not a remnants from previous request or from a garbage value.
     - function `concatenate_zval_array_into_string`: an explicit `IS_OBJECT` guard inside to prevent fatal casting exceptions (`Object of class stdClass could not be converted to string`) and allow the retrieval of nested.

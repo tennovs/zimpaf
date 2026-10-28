@@ -53,7 +53,8 @@
 extern zend_module_entry zimpaf_module_entry;
 # define phpext_zimpaf_ptr &zimpaf_module_entry
 
-#define PHP_ZIMPAF_VERSION "2.0.1"
+#define PHP_ZIMPAF_VERSION "1.2.1"
+
 
 #ifdef PHP_WIN32
 #	define PHP_ZIMPAF_API __declspec(dllexport)
